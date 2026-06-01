@@ -1,0 +1,152 @@
+package org.metadatacenter.cedar.rest;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.jupiter.api.Test;
+import org.metadatacenter.artifacts.model.core.TemplateSchemaArtifact;
+import org.metadatacenter.artifacts.model.renderer.JsonArtifactRenderer;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * Tests the CRUD + validate tools against a fake {@link CedarHttp} — no live CEDAR server. Covers
+ * request construction (path, method, body), the create {@code @id}-null rule, IRI URL-encoding,
+ * the delete confirmation, error surfacing, and validate resource-type detection.
+ */
+final class CedarRestToolsTest
+{
+  private static final String TEMPLATE_TYPE_IRI = "https://schema.metadatacenter.org/core/Template";
+
+  /** Records the last request and returns a canned response. */
+  static final class FakeHttp implements CedarHttp
+  {
+    final int status;
+    final String responseBody;
+    String method, path, body;
+
+    FakeHttp(int status, String responseBody) { this.status = status; this.responseBody = responseBody; }
+
+    @Override public CedarResponse request(String method, String pathAndQuery, String jsonBody)
+    {
+      this.method = method;
+      this.path = pathAndQuery;
+      this.body = jsonBody;
+      return new CedarResponse(status, responseBody);
+    }
+  }
+
+  @Test void registers_sixteen_crud_tools_plus_validate()
+  {
+    var names = ArtifactCrudTools.all(new FakeHttp(200, "{}")).stream().map(rt -> rt.tool().name()).toList();
+    assertEquals(16, names.size(), "4 ops x 4 types; got " + names);
+    for (String op : List.of("get", "create", "update", "delete"))
+      for (String noun : List.of("template", "element", "field", "instance"))
+        assertTrue(names.contains(op + "_" + noun), "missing " + op + "_" + noun + "; got " + names);
+    assertEquals("validate_artifact", ValidateArtifactTool.create(new FakeHttp(200, "{}")).tool().name());
+  }
+
+  @Test void create_nulls_top_level_id_and_posts_to_collection()
+  {
+    FakeHttp http = new FakeHttp(201, "{}");
+    invoke(http, "create_template", Map.of("artifact",
+        "type: template\nname: Demo\nid: https://repo.metadatacenter.org/templates/minted-local\n"));
+
+    assertEquals("POST", http.method);
+    assertEquals("/templates", http.path);
+    assertTrue(http.body.contains("\"@id\":null"),
+        "create must null the top-level @id so the server assigns one; got: " + http.body);
+    assertFalse(http.body.contains("minted-local"),
+        "the caller's @id must be overwritten with null; got: " + http.body);
+  }
+
+  @Test void get_url_encodes_the_iri_into_the_path()
+  {
+    FakeHttp http = new FakeHttp(200, "{}");
+    invoke(http, "get_template", Map.of("id", "https://repo.metadatacenter.org/templates/abc"));
+
+    assertEquals("GET", http.method);
+    assertEquals("/templates/https%3A%2F%2Frepo.metadatacenter.org%2Ftemplates%2Fabc", http.path);
+  }
+
+  @Test void delete_confirms_on_204()
+  {
+    FakeHttp http = new FakeHttp(204, "");
+    McpSchema.CallToolResult result = invoke(http, "delete_template",
+        Map.of("id", "https://repo.metadatacenter.org/templates/abc"));
+
+    assertEquals("DELETE", http.method);
+    assertFalse(result.isError());
+    assertTrue(text(result).contains("Deleted template"), "got: " + text(result));
+  }
+
+  @Test void non_2xx_surfaces_as_error_with_status_and_body()
+  {
+    McpSchema.CallToolResult result = invoke(new FakeHttp(404, "{\"errorKey\":\"notFound\"}"),
+        "get_template", Map.of("id", "https://repo.metadatacenter.org/templates/missing"));
+
+    assertTrue(result.isError(), "a 404 must be an error result");
+    assertTrue(text(result).contains("404") && text(result).contains("notFound"),
+        "error should carry status and server body; got: " + text(result));
+  }
+
+  @Test void get_renders_server_json_as_compact_yaml() throws Exception
+  {
+    // Use a real, library-rendered template JSON as the canned response so the JSON->YAML path runs.
+    String templateJson = new ObjectMapper().writeValueAsString(
+        new JsonArtifactRenderer().renderTemplateSchemaArtifact(
+            TemplateSchemaArtifact.builder()
+                .withJsonLdId(URI.create("https://repo.metadatacenter.org/templates/demo"))
+                .withName("Demo").build()));
+
+    McpSchema.CallToolResult result = invoke(new FakeHttp(200, templateJson),
+        "get_template", Map.of("id", "https://repo.metadatacenter.org/templates/demo"));
+
+    assertFalse(result.isError(), text(result));
+    assertTrue(text(result).contains("type: template"),
+        "response should render as compact YAML; got:\n" + text(result));
+  }
+
+  @Test void validate_detects_resource_type_from_at_type()
+  {
+    FakeHttp http = new FakeHttp(200, "{\"validates\":true,\"warnings\":[],\"errors\":[]}");
+    String templateJson = "{\"@type\":\"" + TEMPLATE_TYPE_IRI + "\",\"schema:name\":\"X\"}";
+
+    McpSchema.CallToolResult result = ValidateArtifactTool.create(http).handler()
+        .apply(null, new McpSchema.CallToolRequest("validate_artifact", Map.of("artifact", templateJson)));
+
+    assertFalse(result.isError(), text(result));
+    assertEquals("POST", http.method);
+    assertEquals("/command/validate?resource_type=template", http.path);
+    assertEquals(templateJson, http.body, "JSON should be validated as-is");
+  }
+
+  @Test void create_requires_artifact()
+  {
+    McpSchema.CallToolResult result = invoke(new FakeHttp(201, "{}"), "create_field", Map.of());
+    assertTrue(result.isError());
+    assertTrue(text(result).contains("artifact"));
+  }
+
+  // helpers
+
+  private static McpSchema.CallToolResult invoke(CedarHttp http, String toolName, Map<String, Object> args)
+  {
+    for (ArtifactCrudTools.RegisteredTool rt : ArtifactCrudTools.all(http))
+      if (rt.tool().name().equals(toolName))
+        return rt.handler().apply(null, new McpSchema.CallToolRequest(toolName, args));
+    throw new IllegalArgumentException("no such tool: " + toolName);
+  }
+
+  private static String text(McpSchema.CallToolResult result)
+  {
+    assertNotNull(result.content());
+    return ((McpSchema.TextContent) result.content().get(0)).text();
+  }
+}
