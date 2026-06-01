@@ -56,7 +56,23 @@ Set in the MCP client's config (e.g. `~/.claude.json`), never in source or chat:
 ```bash
 mvn package          # builds target/cedar-rest-mcp-0.1.0-SNAPSHOT-all.jar (shaded, executable)
 mvn test             # unit tests (run against a fake HTTP transport; no live server needed)
+mvn verify           # + integration tests, but the live ones are excluded by default
 ```
+
+### Live integration tests
+
+`CedarLifecycleIT` exercises validate → create → get → delete against a **real** CEDAR server,
+using canned templates from the sibling `cedar-artifact-library` checkout, and deletes whatever it
+creates. It is tagged `live` and **excluded from the default build** (mirroring
+`bioportal-term-mcp`'s `live` pytest marker). Run it on demand:
+
+```bash
+CEDAR_API_KEY="apiKey <key>" CEDAR_BASE_URL="https://resource.metadatacenter.org" \
+  mvn verify -Plive
+```
+
+Without `CEDAR_API_KEY` the live tests self-skip. Each test cleans up after itself (a failed
+cleanup fails the test).
 
 ## Instances: complete them first
 
