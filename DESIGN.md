@@ -29,8 +29,13 @@ inbound conversion becomes a passthrough (ROADMAP.md).
 `create_*` forces the top-level `@id` to JSON `null` so the **server** assigns the identity (and
 returns it). It overwrites whatever the caller's artifact carried — notably an `@id` minted by
 `cedar-artifact-mcp`. `update_*` preserves the `@id` (it identifies the artifact; the path `{id}`
-and body `@id` must agree). Whether nested child `@id`s must also be nulled on create is an open
-question tracked in ROADMAP.md.
+and body `@id` must agree).
+
+Only the **top-level** `@id` is nulled. Nested element/field `@id`s are submitted exactly as the
+artifact carries them — this is the correct behaviour: the server assigns the artifact's own
+identity and accepts whatever the nested children carry. (Artifacts produced by `cedar-artifact-mcp`
+are child-`@id`-less anyway — it mints a top-level `@id` only — so the common path submits no
+nested `@id`s to begin with.)
 
 ## Principle 5 — Errors are content
 

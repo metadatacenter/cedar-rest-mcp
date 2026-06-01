@@ -52,11 +52,10 @@ The non-artifact REST surface, left to other tooling:
 
 ## Open questions (resolve during build)
 
-- **Nested child `@id` on create** — confirmed: the top-level `@id` must be `null` on POST.
-  TBD whether the server also requires nested element/field `@id`s to be `null`. Artifacts
-  from `cedar-artifact-mcp` are already child-`@id`-less (it mints top-level only), so the
-  common path is unaffected; verify the server's behavior and handle artifacts that *do*
-  carry child `@id`s accordingly.
+- **Nested child `@id` on create** — *resolved.* Only the top-level `@id` is nulled on POST;
+  nested element/field `@id`s are submitted exactly as the artifact carries them, which is the
+  correct behaviour (the server assigns the artifact's own identity and accepts the rest). See
+  DESIGN.md Principle 4.
 - **Target server** — production (`resource.metadatacenter.org`) vs a local CEDAR stack (the
   `cedar-resource-server` checkout under `~/CEDAR`). Determines `CEDAR_BASE_URL` and which
   API key is valid.
