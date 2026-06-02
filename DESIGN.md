@@ -83,8 +83,15 @@ don't expect the `title`/`description` you submit to survive a round trip. `sche
 ## Note — the server requires `version` and `status`
 
 The CEDAR server demands that a persisted artifact carry a version (`pav:version`) and a status
-(`bibo:status`); an artifact missing either is rejected on `create`/`update`. Compact artifacts
-drop provenance — e.g. `cedar-artifact-mcp` omits `version`/`status` in its compact form — so they
-must have a version and status set before being persisted here. This is the consuming-side bite of
-the reader-vs-builder `version`/`status` defaulting asymmetry tracked in `cedar-artifact-library`'s
-ROADMAP (the Java builder defaults `0.0.1` / `draft`; a compact YAML read leaves them empty).
+(`bibo:status`); an artifact missing either is rejected on `create`/`update`.
+
+For **YAML input this is now handled automatically.** `cedar-artifact-library`'s readers default a
+top-level artifact's `version`/`status` to `0.0.1` / `draft` when absent, and this MCP reads YAML
+through the library on its way to JSON — so a compact/provenance-less YAML artifact still persists
+cleanly, no need to set version/status by hand. (This resolved the reader-vs-builder defaulting
+asymmetry once tracked in the library's ROADMAP.) **Raw JSON input is passed through untouched**
+(it does not go through the reader), so a JSON artifact must already carry `version`/`status`.
+
+The server-side root cause — that it *demands* these rather than defaulting them — is filed as
+[cedar-resource-server#92](https://github.com/metadatacenter/cedar-resource-server/issues/92); the
+client now always supplies them on the YAML path regardless.
