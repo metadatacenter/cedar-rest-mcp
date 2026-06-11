@@ -27,11 +27,13 @@ is out of scope, so the boundaries don't drift.
 
 - **Build without a locally installed library** — building this MCP requires
   `cedar-artifact-library:2.8.1-SNAPSHOT` to have been `mvn install`ed from a local checkout
-  of the library's `develop` branch; it does not resolve from any public repository, so
-  anyone building from source must first clone and build the library (the prebuilt shaded
-  jar is the workaround). The fix lives on the library side — publish released, non-SNAPSHOT
-  artifacts to a public Maven repository and pin this MCP to a released version.
-  `cedar-cee-mcp` already resolves entirely from Maven Central and is the target state.
+  of the library's `develop` branch — and that library in turn sits atop `cedar-parent`,
+  `cedar-model-library`, and `cedar-model-validation-library`, so a fresh machine must clone
+  and install four repositories in dependency order; none of the snapshots resolve from any
+  public repository (the prebuilt shaded jar is the workaround). The fix lives on the
+  library side — publish released, non-SNAPSHOT artifacts to a public Maven repository and
+  pin this MCP to a released version. `cedar-cee-mcp` already resolves entirely from Maven
+  Central and is the target state.
 - **`folder_id` on create** — v1 creates artifacts in the caller's home folder. Add the
   optional `folder_id` query parameter (`POST /templates?folder_id=<IRI>`, etc.) so an
   artifact can be placed in a chosen folder.
