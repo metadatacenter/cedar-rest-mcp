@@ -15,9 +15,9 @@ which it translates into REST MCP tool calls against a live CEDAR server. This M
 **persistence half** of the pipeline: author and shape an artifact in memory with
 [`cedar-artifact-mcp`](../cedar-artifact-mcp), then hand it here to validate, save, fetch, update,
 or remove it. This MCP speaks the CEDAR server's wire format — **JSON** — both ways: artifacts go
-in as JSON and come back as JSON. Converting to and from YAML (the ecosystem's exchange currency)
-is `cedar-artifact-mcp`'s job — the LLM runs its `*_to_json` to produce the body it saves here,
-and its `*_to_yaml` to render a fetched artifact for display. The YAML shown below is that
+in as JSON and come back as JSON. Converting to and from YAML (the compact, human-friendly
+serialization) is `cedar-artifact-mcp`'s job — the LLM runs its `*_to_json` to produce the body it
+saves here, and its `*_to_yaml` to render a fetched artifact for display. The YAML shown below is that
 rendered view; the bytes crossing this MCP are JSON.
 
 Assume the LLM already has a Patient Study template in hand, authored with `cedar-artifact-mcp`
