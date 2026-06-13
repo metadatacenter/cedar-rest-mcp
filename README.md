@@ -67,12 +67,23 @@ children:
     datatype: xsd:int
 ```
 
-`create_template` blanks the top-level `@id` before sending, so the **server** mints the identity
-and returns it — the `id:` above is the server's, not anything you supplied. (The LLM converts the
-artifact to JSON with `template_to_json` first.) Two server behaviors to expect: it **requires** a
+`create_template` deliberately blanks the top-level `@id` before sending. In CEDAR an artifact's
+identity is the **repository's** to assign, not the author's: a template you build locally carries
+only a provisional `@id` (above, `…/templates/76cf7229…`, minted by `cedar-artifact-mcp` so the
+artifact is well-formed in transit), and on `create` the server discards it, mints an authoritative
+IRI under its own namespace (`…/templates/0e8f3a91…`), and returns the stored artifact carrying
+that id. From then on the server `@id` is the handle — it is what you pass to `get` / `update` /
+`delete`. Only the **top-level** `@id` is reassigned; the embedded field ids (`0252465c…`,
+`cbb34a8a…`) ride through unchanged.
+
+The CEDAR server's REST API currently speaks **JSON only**, so the LLM converts the template with
+`cedar-artifact-mcp`'s `template_to_json` before this call (and renders the response back with
+`template_to_yaml` for display). The server is expected to accept YAML directly in a later release,
+at which point that conversion hop disappears — JSON is the server's current wire format, not a
+privileged form of the artifact. Two more server behaviors to expect on store: it **requires** a
 `version` and `status` (both supplied automatically by `cedar-artifact-mcp` when it builds the
-artifact), and on store it **rewrites** the JSON-Schema `title` / `description` (it leaves
-`schema:name` / `schema:description` alone).
+artifact), and it **rewrites** the JSON-Schema `title` / `description` while leaving `schema:name`
+/ `schema:description` alone.
 
 *Fetch it back.*
 
