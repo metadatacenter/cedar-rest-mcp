@@ -13,7 +13,8 @@
   <name>cedar-artifact-rest-mcp</name>
   <description>
     MCP server that manages CEDAR artifacts (templates, elements, fields, instances) through
-    the CEDAR resource-server REST API. The I/O counterpart to cedar-artifact-mcp: it persists
+    the CEDAR resource-server REST API — the artifact surface only, not folders, search, users,
+    or permissions. The I/O counterpart to cedar-artifact-mcp: it persists
     artifacts to, and fetches them from, a live CEDAR server. Speaks the server's wire format —
     JSON — both ways; YAML conversion is cedar-artifact-mcp's job (its *_to_json / *_to_yaml
     tools), so this MCP carries no dependency on cedar-artifact-library and resolves entirely
