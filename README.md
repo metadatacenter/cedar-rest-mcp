@@ -108,29 +108,67 @@ calling it, then removes the artifact by IRI.
 
 ## Tools
 
-`get / create / update / delete` for each artifact kind, plus server-side validation:
+Each tool is a thin wrapper over one CEDAR **resource-server** REST endpoint — `get` / `create` /
+`update` / `delete` for each of the four artifact kinds, plus server-side validation. The four
+kinds differ only by endpoint path, so the tools are generated per kind and behave identically
+within an operation; they're documented once per operation below. This MCP speaks **JSON** both
+ways (see [DESIGN.md](./DESIGN.md) Principle 3): artifact bodies go in as canonical CEDAR JSON and
+responses come back as JSON — converting to/from YAML is `cedar-artifact-mcp`'s job (`*_to_json` /
+`*_to_yaml`). A non-2xx server response is surfaced as an error result carrying the status and
+body (errors are content, never thrown).
 
-| Tool | Method | Endpoint |
-|---|---|---|
-| `get_{template,element,field,instance}` | GET | `/{type}/{id}` |
-| `create_{…}` | POST | `/{type}` |
-| `update_{…}` | PUT | `/{type}/{id}` |
-| `delete_{…}` | DELETE | `/{type}/{id}` |
-| `validate_artifact` | POST | `/command/validate?resource_type=…` |
+| Group | Tools |
+|---|---|
+| Fetch | `get_template` · `get_element` · `get_field` · `get_instance` |
+| Create | `create_template` · `create_element` · `create_field` · `create_instance` |
+| Update | `update_template` · `update_element` · `update_field` · `update_instance` |
+| Delete | `delete_template` · `delete_element` · `delete_field` · `delete_instance` |
+| Validate | `validate_artifact` |
+| Diagnostics | `ping` |
 
-- **`id`** is the artifact's `@id` (full IRI); URL-encoding into the path is handled for you.
-- **`artifact`** is **JSON** — the canonical CEDAR JSON Schema form, e.g. what
-  `cedar-artifact-mcp`'s `*_to_json` produces; responses come back as JSON. YAML in or out is a
-  `cedar-artifact-mcp` conversion (`*_to_json` / `*_to_yaml`), not something this MCP does — pass
-  it YAML and it redirects you there.
-- **`create`** sets the top-level `@id` to `null`; the server assigns the real `@id` and returns
-  the created artifact. **`update`** keeps the `@id` (must match the `id` argument).
-- **`delete` is destructive and irreversible** — confirm before calling.
-- **`validate_artifact`** auto-detects the kind and calls the server's authoritative validator;
-  returns `{validates, warnings, errors}`. (No artifact is created.)
+**Conventions.** Artifacts are addressed by `@id` — the full CEDAR IRI; URL-encoding into the
+request path is handled for you, so pass the plain IRI. The `artifact` body is canonical CEDAR
+**JSON** (e.g. what `cedar-artifact-mcp`'s `*_to_json` produces); pass YAML and the tool redirects
+you to convert it there first. Discovery (search, folder listing) is **out of scope** — you operate
+by IRI: fetch what you can name, or what a `create` just returned.
 
-Artifact discovery (search, folder listing) is **out of scope** — you operate by IRI: fetch what
-you can name, or what a `create` just returned.
+### `get_{template,element,field,instance}(id)`
+
+Fetches an artifact from the CEDAR server by its `@id` IRI (`GET /{type}/{id}`). Returns the
+artifact as canonical CEDAR JSON; render it to compact YAML for display with `cedar-artifact-mcp`'s
+matching `*_to_yaml`.
+
+### `create_{template,element,field,instance}(artifact)`
+
+Creates a new artifact on the server (`POST /{type}`), placed in your home folder. **Writes to the
+server.** The top-level `@id` is forced to `null` on submission, so the **server** mints the
+identity and returns it in the response — the `@id` you get back is the server's, not anything you
+supplied. The body must carry a `version` and `status` (the server requires both; a body from
+`cedar-artifact-mcp`'s `*_to_json` already has them — see DESIGN.md).
+
+### `update_{template,element,field,instance}(id, artifact)`
+
+Updates an existing artifact (`PUT /{type}/{id}`). **Writes to the server.** The `id` argument and
+the body's `@id` must agree; unlike `create`, nothing is re-minted. Returns the stored artifact as
+JSON.
+
+### `delete_{template,element,field,instance}(id)`
+
+Permanently deletes an artifact by IRI (`DELETE /{type}/{id}`). **Destructive and irreversible** —
+confirm with the user before calling. Returns a confirmation on success.
+
+### `validate_artifact(artifact)`
+
+Validates an artifact against the CEDAR meta-model using the server's authoritative
+`POST /command/validate`. The kind is auto-detected from the JSON `@type`; the artifact is checked
+exactly as received. Returns the server's report — `{"validates": true|false, "warnings": [...],
+"errors": [...]}`. Read-only: nothing is created. Complements `cedar-artifact-mcp`'s client-side
+`validate_*` — this is the server's authoritative verdict.
+
+### `ping(message)`
+
+Echoes `message` back, confirming the MCP server is reachable. Does **not** contact the CEDAR
+server (needs no API key) — a pure liveness check.
 
 ## Configuration
 
