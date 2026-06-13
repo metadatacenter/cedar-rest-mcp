@@ -59,7 +59,7 @@ final class ArtifactCrudTools
         .title("Fetch a CEDAR " + type.noun + " from the server")
         .description(
             "Fetches a CEDAR " + type.noun + " from the CEDAR server by its @id (IRI). Returns the "
-                + "artifact as canonical CEDAR JSON. To view it as compact YAML, pass the result to "
+                + "artifact as CEDAR JSON. To view it as compact YAML, pass the result to "
                 + "cedar-artifact-mcp's " + type.noun + "_to_yaml. Reproduce the returned JSON "
                 + "verbatim — do not drop @id lines or summarize.")
         .inputSchema(schema(properties, List.of("id")))
@@ -255,8 +255,8 @@ final class ArtifactCrudTools
   private static Map<String, Object> artifactProperty(ArtifactType type)
   {
     return Map.of("type", "string", "description",
-        "The CEDAR " + type.noun + " as JSON (the canonical CEDAR JSON Schema form, e.g. what "
-            + "cedar-artifact-mcp's " + type.noun + "_to_json produces). Pass it inline, verbatim.");
+        "The CEDAR " + type.noun + " as JSON — what cedar-artifact-mcp's " + type.noun
+            + "_to_json produces. Pass it inline, verbatim.");
   }
 
   private static McpSchema.JsonSchema schema(Map<String, Object> properties, List<String> required)

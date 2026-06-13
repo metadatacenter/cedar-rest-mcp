@@ -149,10 +149,8 @@ body (errors are content, never thrown).
 | Diagnostics | `ping` |
 
 **Conventions.** Artifacts are addressed by `@id` — the full CEDAR IRI; URL-encoding into the
-request path is handled for you, so pass the plain IRI. The `artifact` body is CEDAR
-**JSON** — the JSON Schema form, e.g. what `cedar-artifact-mcp`'s `*_to_json` produces; pass YAML and the tool redirects
-you to convert it there first. Discovery (search, folder listing) is **out of scope** — you operate
-by IRI: fetch what you can name, or what a `create` just returned.
+request path is handled for you, so pass the plain IRI. Discovery (search, folder listing) is
+**out of scope** — you operate by IRI: fetch what you can name, or what a `create` just returned.
 
 ### `get_{template,element,field,instance}(id)`
 

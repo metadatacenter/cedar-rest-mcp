@@ -23,10 +23,10 @@ final class ValidateArtifactTool
   {
     Map<String, Object> properties = new LinkedHashMap<>();
     properties.put("artifact", Map.of("type", "string", "description",
-        "A CEDAR template, element, field, or instance as JSON (the canonical CEDAR JSON Schema "
-            + "form). Validated exactly as received. Pass it inline, verbatim — do not reformat or "
-            + "massage it. If you hold it as YAML, convert it first with cedar-artifact-mcp's "
-            + "*_to_json."));
+        "A CEDAR template, element, field, or instance as JSON — what cedar-artifact-mcp's "
+            + "*_to_json produces. Validated exactly as received. Pass it inline, verbatim — do not "
+            + "reformat or massage it. If you hold it as YAML, convert it first with "
+            + "cedar-artifact-mcp's *_to_json."));
 
     McpSchema.Tool tool = McpSchema.Tool.builder()
         .name("validate_artifact")
