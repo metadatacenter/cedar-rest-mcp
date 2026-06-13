@@ -123,6 +123,9 @@ children:
     value: 30
 ```
 
+`create_instance` persists the instance to the CEDAR server — a **write** — and, like
+`create_template`, lets the server assign its `@id` (the `template-instances/…` IRI above).
+
 *Delete the template.*
 
 `delete_template` is **destructive and irreversible**, so the LLM confirms with the user before
