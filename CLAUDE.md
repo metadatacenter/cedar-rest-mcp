@@ -42,7 +42,7 @@ After those three, the code is self-explanatory. Patterns to mirror:
 ## Build conventions
 
 - Java 17 source/target.
-- `mvn package` produces an executable shaded jar at `target/cedar-rest-mcp-<version>-all.jar`.
+- `mvn package` produces an executable shaded jar at `target/cedar-artifact-rest-mcp-<version>-all.jar`.
 - The shade plugin needs explicit filters to strip Jackson 2.x annotation classes bundled inside
   `cedar-model-library` / `cedar-model-validation-library` (they shadow the Jackson 3.x
   annotations the MCP SDK requires). See `pom.xml`; do not remove them.

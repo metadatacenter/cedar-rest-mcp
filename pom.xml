@@ -6,11 +6,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.metadatacenter</groupId>
-  <artifactId>cedar-rest-mcp</artifactId>
+  <artifactId>cedar-artifact-rest-mcp</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>cedar-rest-mcp</name>
+  <name>cedar-artifact-rest-mcp</name>
   <description>
     MCP server that manages CEDAR artifacts (templates, elements, fields, instances) through
     the CEDAR resource-server REST API. The I/O counterpart to cedar-artifact-mcp: it persists

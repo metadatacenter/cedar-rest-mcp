@@ -1,6 +1,6 @@
 # Design
 
-Principles governing what belongs in `cedar-rest-mcp`. Read before adding a tool or input.
+Principles governing what belongs in `cedar-artifact-rest-mcp`. Read before adding a tool or input.
 
 ## Principle 1 — Artifacts only, over one REST API
 
@@ -11,7 +11,7 @@ search, users, groups, permissions, index maintenance — is out of scope (see R
 
 ## Principle 2 — The server is the system of record
 
-`cedar-rest-mcp` does not model, mutate, or reason about artifacts beyond format conversion. The
+`cedar-artifact-rest-mcp` does not model, mutate, or reason about artifacts beyond format conversion. The
 CEDAR server owns identity (`@id`), validation, versioning, and persistence. This MCP is a thin,
 honest conduit to it. Artifact *construction* and in-memory validation/conversion live in
 `cedar-artifact-mcp`; the two compose (build there, persist here).
@@ -75,7 +75,7 @@ All network I/O goes through the `CedarHttp` interface. The production implement
 The CEDAR server requires an instance to carry every template field (the template's JSON Schema
 marks them required). A *sparse* instance (the form `cedar-artifact-mcp` produces) will be
 rejected. Complete it first — e.g. `cedar-artifact-mcp`'s `instance_to_json` given the template —
-then create/update it here. `cedar-rest-mcp` does not fetch the template to inflate (it has no
+then create/update it here. `cedar-artifact-rest-mcp` does not fetch the template to inflate (it has no
 template on hand); revisit if that ergonomic becomes worth the coupling.
 
 ## Note — the server rewrites `title` and `description` on persist

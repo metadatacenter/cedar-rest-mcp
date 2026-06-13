@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public final class CedarRestMcpServer
 {
-  private static final String SERVER_NAME = "cedar-rest-mcp";
+  private static final String SERVER_NAME = "cedar-artifact-rest-mcp";
   private static final String SERVER_VERSION = "0.1.0";
 
   private CedarRestMcpServer() {}

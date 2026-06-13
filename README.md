@@ -1,4 +1,4 @@
-# cedar-rest-mcp
+# cedar-artifact-rest-mcp
 
 An MCP server that manages CEDAR **artifacts** — templates, elements, fields, and instances —
 through the CEDAR [**resource-server REST API**](https://resource.metadatacenter.org/api/). It is the I/O counterpart to
@@ -198,9 +198,9 @@ server (needs no API key) — a pure liveness check.
 Set in the MCP client's config (e.g. `~/.claude.json`), never in source or chat:
 
 ```json
-"cedar-rest": {
+"cedar-artifact-rest": {
   "command": "/usr/bin/java",
-  "args": ["-jar", "/path/to/cedar-rest-mcp/target/cedar-rest-mcp-0.1.0-SNAPSHOT-all.jar"],
+  "args": ["-jar", "/path/to/cedar-artifact-rest-mcp/target/cedar-artifact-rest-mcp-0.1.0-SNAPSHOT-all.jar"],
   "env": {
     "CEDAR_API_KEY": "apiKey <your-key>",
     "CEDAR_BASE_URL": "https://resource.metadatacenter.org"
@@ -215,7 +215,7 @@ Set in the MCP client's config (e.g. `~/.claude.json`), never in source or chat:
 ## Build
 
 ```bash
-mvn package          # builds target/cedar-rest-mcp-0.1.0-SNAPSHOT-all.jar (shaded, executable)
+mvn package          # builds target/cedar-artifact-rest-mcp-0.1.0-SNAPSHOT-all.jar (shaded, executable)
 mvn test             # unit tests (run against a fake HTTP transport; no live server needed)
 mvn verify           # + integration tests, but the live ones are excluded by default
 ```
