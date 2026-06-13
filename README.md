@@ -14,11 +14,14 @@ A typical session looks like the following — natural-language prompts the user
 which it translates into REST MCP tool calls against a live CEDAR server. This MCP is the
 **persistence half** of the pipeline: author and shape an artifact in memory with
 [`cedar-artifact-mcp`](../cedar-artifact-mcp), then hand it here to validate, save, fetch, update,
-or remove it. Artifacts go in as **YAML or JSON** (auto-detected) and come back as **compact**
-YAML — the lean view that drops provenance; pass `isCompact: false` for the fully-provenanced
-form.
+or remove it. This MCP speaks the CEDAR server's wire format — **JSON** — both ways: artifacts go
+in as JSON and come back as JSON. Converting to and from YAML (the ecosystem's exchange currency)
+is `cedar-artifact-mcp`'s job — the LLM runs its `*_to_json` to produce the body it saves here,
+and its `*_to_yaml` to render a fetched artifact for display. The YAML shown below is that
+rendered view; the bytes crossing this MCP are JSON.
 
-Assume the LLM already has a Patient Study template in hand, authored with `cedar-artifact-mcp`:
+Assume the LLM already has a Patient Study template in hand, authored with `cedar-artifact-mcp`
+(shown as the compact YAML the user sees):
 
 ```yaml
 type: template
@@ -39,9 +42,9 @@ children:
 { "validates": true, "warnings": [], "errors": [] }
 ```
 
-`validate_artifact` posts the artifact to the server's authoritative validator and returns its
-report. Nothing is created — it is a dry run, usable on any artifact including ones pulled from
-elsewhere (the `validate_*` per-kind tools behave the same).
+The LLM converts the template to JSON with `cedar-artifact-mcp`'s `template_to_json`, then
+`validate_artifact` posts that to the server's authoritative validator and returns its report.
+Nothing is created — it is a dry run, usable on any artifact including ones pulled from elsewhere.
 
 *Save it to CEDAR.*
 
@@ -60,9 +63,10 @@ children:
 ```
 
 `create_template` blanks the top-level `@id` before sending, so the **server** mints the identity
-and returns it — the `id:` above is the server's, not anything you supplied. Two server behaviors
-to expect: it **requires** a `version` and `status` (both supplied automatically on the YAML
-path), and on store it **rewrites** the JSON-Schema `title` / `description` (it leaves
+and returns it — the `id:` above is the server's, not anything you supplied. (The LLM converts the
+artifact to JSON with `template_to_json` first.) Two server behaviors to expect: it **requires** a
+`version` and `status` (both supplied automatically by `cedar-artifact-mcp` when it builds the
+artifact), and on store it **rewrites** the JSON-Schema `title` / `description` (it leaves
 `schema:name` / `schema:description` alone).
 
 *Fetch it back.*
@@ -82,7 +86,8 @@ children:
 ```
 
 `get_template` takes the artifact's `@id` (the full IRI); URL-encoding into the path is handled for
-you.
+you. It returns the artifact as JSON; the LLM renders it back to the YAML above with
+`template_to_yaml` for display.
 
 *Bump it to version 1.0.0 and update it.*
 
@@ -114,8 +119,10 @@ calling it, then removes the artifact by IRI.
 | `validate_artifact` | POST | `/command/validate?resource_type=…` |
 
 - **`id`** is the artifact's `@id` (full IRI); URL-encoding into the path is handled for you.
-- **`artifact`** is accepted as **YAML or JSON** (auto-detected) and sent as JSON; responses come
-  back as **compact YAML** (`isCompact:false` for the expanded form).
+- **`artifact`** is **JSON** — the canonical CEDAR JSON Schema form, e.g. what
+  `cedar-artifact-mcp`'s `*_to_json` produces; responses come back as JSON. YAML in or out is a
+  `cedar-artifact-mcp` conversion (`*_to_json` / `*_to_yaml`), not something this MCP does — pass
+  it YAML and it redirects you there.
 - **`create`** sets the top-level `@id` to `null`; the server assigns the real `@id` and returns
   the created artifact. **`update`** keeps the `@id` (must match the `id` argument).
 - **`delete` is destructive and irreversible** — confirm before calling.

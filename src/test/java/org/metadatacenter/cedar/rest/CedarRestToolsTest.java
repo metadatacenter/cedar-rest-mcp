@@ -1,12 +1,8 @@
 package org.metadatacenter.cedar.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
-import org.metadatacenter.artifacts.model.core.TemplateSchemaArtifact;
-import org.metadatacenter.artifacts.model.renderer.JsonArtifactRenderer;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +52,8 @@ final class CedarRestToolsTest
   {
     FakeHttp http = new FakeHttp(201, "{}");
     invoke(http, "create_template", Map.of("artifact",
-        "type: template\nname: Demo\nid: https://repo.metadatacenter.org/templates/minted-local\n"));
+        "{\"@type\":\"" + TEMPLATE_TYPE_IRI + "\",\"schema:name\":\"Demo\","
+            + "\"@id\":\"https://repo.metadatacenter.org/templates/minted-local\"}"));
 
     assertEquals("POST", http.method);
     assertEquals("/templates", http.path);
@@ -64,6 +61,16 @@ final class CedarRestToolsTest
         "create must null the top-level @id so the server assigns one; got: " + http.body);
     assertFalse(http.body.contains("minted-local"),
         "the caller's @id must be overwritten with null; got: " + http.body);
+  }
+
+  @Test void create_rejects_yaml_with_a_redirect_to_artifact_mcp()
+  {
+    McpSchema.CallToolResult result = invoke(new FakeHttp(201, "{}"), "create_template",
+        Map.of("artifact", "type: template\nname: Demo\n"));
+
+    assertTrue(result.isError(), "YAML input must be rejected — this MCP is JSON only");
+    assertTrue(text(result).contains("JSON only") && text(result).contains("template_to_json"),
+        "error should redirect to cedar-artifact-mcp's converter; got: " + text(result));
   }
 
   @Test void get_url_encodes_the_iri_into_the_path()
@@ -96,21 +103,19 @@ final class CedarRestToolsTest
         "error should carry status and server body; got: " + text(result));
   }
 
-  @Test void get_renders_server_json_as_compact_yaml() throws Exception
+  @Test void get_returns_the_server_json_pretty_printed()
   {
-    // Use a real, library-rendered template JSON as the canned response so the JSON->YAML path runs.
-    String templateJson = new ObjectMapper().writeValueAsString(
-        new JsonArtifactRenderer().renderTemplateSchemaArtifact(
-            TemplateSchemaArtifact.builder()
-                .withJsonLdId(URI.create("https://repo.metadatacenter.org/templates/demo"))
-                .withName("Demo").build()));
+    String templateJson = "{\"@type\":\"" + TEMPLATE_TYPE_IRI + "\","
+        + "\"@id\":\"https://repo.metadatacenter.org/templates/demo\",\"schema:name\":\"Demo\"}";
 
     McpSchema.CallToolResult result = invoke(new FakeHttp(200, templateJson),
         "get_template", Map.of("id", "https://repo.metadatacenter.org/templates/demo"));
 
     assertFalse(result.isError(), text(result));
-    assertTrue(text(result).contains("type: template"),
-        "response should render as compact YAML; got:\n" + text(result));
+    // Returned as JSON (not YAML): the @id and name survive, and it pretty-prints over lines.
+    assertTrue(text(result).contains("\"@id\" : \"https://repo.metadatacenter.org/templates/demo\""),
+        "response should be pretty-printed JSON; got:\n" + text(result));
+    assertTrue(text(result).contains("\"schema:name\" : \"Demo\""), text(result));
   }
 
   @Test void validate_detects_resource_type_from_at_type()

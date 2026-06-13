@@ -14,9 +14,11 @@ is out of scope, so the boundaries don't drift.
   {template, element, field, instance} (16 tools).
 - **Server-side validation**: `validate_artifact` → `POST /command/validate` (the
   authoritative meta-model validator; complements `cedar-artifact-mcp`'s client-side one).
-- **YAML-aware exchange** (reusing `cedar-artifact-library`): a tool accepts YAML *or*
-  JSON from the caller, sends canonical **JSON** on the wire (the only thing the REST API
-  accepts today), and renders responses back as **compact YAML** by default.
+- **JSON end to end**: artifacts go in as JSON and come back as JSON — the CEDAR server's own
+  wire format. No YAML conversion and no `cedar-artifact-library` dependency; converting to/from
+  YAML is `cedar-artifact-mcp`'s job (`*_to_json` / `*_to_yaml`), which the orchestrating LLM
+  runs on either side of a REST call. A YAML body is redirected there rather than parsed. This
+  MCP therefore resolves entirely from Maven Central.
 - **Create `@id` handling**: `create_*` forces the top-level `@id` to JSON `null` so the
   server assigns one; the assigned `@id` comes back in the response. `update_*` preserves
   the `@id` (it identifies the artifact; path `{id}` and body `@id` must agree).
@@ -25,15 +27,6 @@ is out of scope, so the boundaries don't drift.
 
 ## Deferred (planned, not in v1)
 
-- **Build without a locally installed library** — building this MCP requires
-  `cedar-artifact-library:2.8.1-SNAPSHOT` to have been `mvn install`ed from a local checkout
-  of the library's `develop` branch — and that library in turn sits atop `cedar-parent`,
-  `cedar-model-library`, and `cedar-model-validation-library`, so a fresh machine must clone
-  and install four repositories in dependency order; none of the snapshots resolve from any
-  public repository (the prebuilt shaded jar is the workaround). The fix lives on the
-  library side — publish released, non-SNAPSHOT artifacts to a public Maven repository and
-  pin this MCP to a released version. `cedar-cee-mcp` already resolves entirely from Maven
-  Central and is the target state.
 - **`folder_id` on create** — v1 creates artifacts in the caller's home folder. Add the
   optional `folder_id` query parameter (`POST /templates?folder_id=<IRI>`, etc.) so an
   artifact can be placed in a chosen folder.
@@ -42,9 +35,9 @@ is out of scope, so the boundaries don't drift.
 - **Lifecycle / versioning** — `/command/create-draft-artifact`, `/command/publish-artifact`,
   `make-artifact-open` / `make-artifact-not-open`: the draft → publish workflow. These are
   mutating and partly irreversible; revisit deliberately.
-- **YAML on the wire** — when the REST API accepts YAML, drop the inbound JSON conversion
-  and pass the caller's YAML straight through (and request YAML responses), removing the
-  round-trip the v1 codec performs.
+- **YAML on the wire** — if the REST API ever accepts YAML, this MCP could pass a caller's
+  YAML straight through (and request YAML responses), letting callers skip the
+  `cedar-artifact-mcp` conversion hop for REST-only workflows. Not a v1 concern.
 
 ## Out of scope
 

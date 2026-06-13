@@ -11,8 +11,9 @@ import java.util.function.BiFunction;
 /**
  * Tool {@code validate_artifact} — validates a CEDAR artifact against the meta-model using the
  * server's authoritative {@code POST /command/validate}. The kind (template / element / field /
- * instance) is auto-detected; JSON input is validated as-is (the "from the wild" case), YAML is
- * converted first. Returns the server's {@code {validates, warnings, errors}} report.
+ * instance) is auto-detected from the JSON {@code @type}; the artifact is validated as-is. JSON
+ * only, like the rest of this MCP — a YAML artifact is converted first with cedar-artifact-mcp's
+ * {@code *_to_json}. Returns the server's {@code {validates, warnings, errors}} report.
  */
 final class ValidateArtifactTool
 {
@@ -22,19 +23,21 @@ final class ValidateArtifactTool
   {
     Map<String, Object> properties = new LinkedHashMap<>();
     properties.put("artifact", Map.of("type", "string", "description",
-        "A CEDAR template, element, field, or instance as YAML or JSON (auto-detected). JSON is "
-            + "validated exactly as received. Pass it inline, verbatim — do not reformat or massage "
-            + "it."));
+        "A CEDAR template, element, field, or instance as JSON (the canonical CEDAR JSON Schema "
+            + "form). Validated exactly as received. Pass it inline, verbatim — do not reformat or "
+            + "massage it. If you hold it as YAML, convert it first with cedar-artifact-mcp's "
+            + "*_to_json."));
 
     McpSchema.Tool tool = McpSchema.Tool.builder()
         .name("validate_artifact")
         .title("Validate a CEDAR artifact on the server")
         .description(
             "Validates a CEDAR artifact against the CEDAR meta-model using the server's "
-                + "/command/validate (authoritative). The kind is auto-detected from the artifact. "
-                + "Accepts YAML or JSON; JSON is validated as-is. Returns the server's report: "
-                + "{\"validates\": true|false, \"warnings\": [...], \"errors\": [...]}. This is a "
-                + "read-only call (no artifact is created).")
+                + "/command/validate (authoritative). The kind is auto-detected from the JSON "
+                + "@type. JSON only, validated as-is; convert YAML first with cedar-artifact-mcp's "
+                + "*_to_json. Returns the server's report: {\"validates\": true|false, "
+                + "\"warnings\": [...], \"errors\": [...]}. This is a read-only call (no artifact "
+                + "is created).")
         .inputSchema(new McpSchema.JsonSchema("object", properties, List.of("artifact"),
             Boolean.FALSE, null, null))
         .build();
@@ -46,6 +49,9 @@ final class ValidateArtifactTool
           String text = raw == null ? null : raw.toString();
           if (text == null || text.isBlank())
             return error("artifact is required and must not be blank");
+          if (!ArtifactCodec.looksLikeJson(text))
+            return error("this MCP accepts artifacts as JSON only; the input looks like YAML. "
+                + "Convert it first with cedar-artifact-mcp's *_to_json, then validate the JSON here.");
 
           ArtifactCodec.Detected detected;
           try {
