@@ -26,13 +26,16 @@ Assume the LLM already has a Patient Study template in hand, authored with `ceda
 ```yaml
 type: template
 name: Patient Study
+id: https://repo.metadatacenter.org/templates/76cf7229-d0ae-462a-a40a-e2f8eeb5d041
 children:
   - key: Patient Name
     type: text-field
     name: Patient Name
+    id: https://repo.metadatacenter.org/template-fields/0252465c-1c51-4fae-a41a-a9263bc9dc31
   - key: Age
     type: numeric-field
     name: Age
+    id: https://repo.metadatacenter.org/template-fields/cbb34a8a-d754-4425-b0e9-52f3db4ade08
     datatype: xsd:int
 ```
 
@@ -56,9 +59,11 @@ children:
   - key: Patient Name
     type: text-field
     name: Patient Name
+    id: https://repo.metadatacenter.org/template-fields/0252465c-1c51-4fae-a41a-a9263bc9dc31
   - key: Age
     type: numeric-field
     name: Age
+    id: https://repo.metadatacenter.org/template-fields/cbb34a8a-d754-4425-b0e9-52f3db4ade08
     datatype: xsd:int
 ```
 
@@ -79,9 +84,11 @@ children:
   - key: Patient Name
     type: text-field
     name: Patient Name
+    id: https://repo.metadatacenter.org/template-fields/0252465c-1c51-4fae-a41a-a9263bc9dc31
   - key: Age
     type: numeric-field
     name: Age
+    id: https://repo.metadatacenter.org/template-fields/cbb34a8a-d754-4425-b0e9-52f3db4ade08
     datatype: xsd:int
 ```
 
