@@ -108,12 +108,20 @@ children:
 you. It returns the artifact as JSON; the LLM renders it back to the YAML above with
 `template_to_yaml` for display.
 
-*Bump it to version 1.0.0 and update it.*
-
-`update_template` keeps the `@id` — the `id` argument and the body's `@id` must agree — and returns
-the stored artifact. Unlike `create`, nothing is re-minted.
-
 *Now create an instance with Patient Name = Alice and Age = 30.*
+
+```yaml
+type: instance
+name: Patient Study
+id: https://repo.metadatacenter.org/template-instances/8f785ae9-d33d-4566-a785-5f868b20bd75
+isBasedOn: https://repo.metadatacenter.org/templates/0e8f3a91-7d2c-4b6a-9e1f-5a8c2d0b4e63
+children:
+  Patient Name:
+    value: Alice
+  Age:
+    datatype: xsd:int
+    value: 30
+```
 
 The CEDAR server requires an instance to carry **every** template field; a sparse instance is
 rejected. So the LLM first asks `cedar-artifact-mcp` to produce a complete JSON instance
