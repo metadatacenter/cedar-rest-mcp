@@ -112,7 +112,7 @@ Each tool is a thin wrapper over one CEDAR **resource-server** REST endpoint —
 `update` / `delete` for each of the four artifact kinds, plus server-side validation. The four
 kinds differ only by endpoint path, so the tools are generated per kind and behave identically
 within an operation; they're documented once per operation below. This MCP speaks **JSON** both
-ways (see [DESIGN.md](./DESIGN.md) Principle 3): artifact bodies go in as canonical CEDAR JSON and
+ways (see [DESIGN.md](./DESIGN.md) Principle 3): artifact bodies go in as JSON and
 responses come back as JSON — converting to/from YAML is `cedar-artifact-mcp`'s job (`*_to_json` /
 `*_to_yaml`). A non-2xx server response is surfaced as an error result carrying the status and
 body (errors are content, never thrown).
@@ -127,15 +127,15 @@ body (errors are content, never thrown).
 | Diagnostics | `ping` |
 
 **Conventions.** Artifacts are addressed by `@id` — the full CEDAR IRI; URL-encoding into the
-request path is handled for you, so pass the plain IRI. The `artifact` body is canonical CEDAR
-**JSON** (e.g. what `cedar-artifact-mcp`'s `*_to_json` produces); pass YAML and the tool redirects
+request path is handled for you, so pass the plain IRI. The `artifact` body is CEDAR
+**JSON** — the JSON Schema form, e.g. what `cedar-artifact-mcp`'s `*_to_json` produces; pass YAML and the tool redirects
 you to convert it there first. Discovery (search, folder listing) is **out of scope** — you operate
 by IRI: fetch what you can name, or what a `create` just returned.
 
 ### `get_{template,element,field,instance}(id)`
 
 Fetches an artifact from the CEDAR server by its `@id` IRI (`GET /{type}/{id}`). Returns the
-artifact as canonical CEDAR JSON; render it to compact YAML for display with `cedar-artifact-mcp`'s
+artifact as CEDAR JSON; render it to compact YAML for display with `cedar-artifact-mcp`'s
 matching `*_to_yaml`.
 
 ### `create_{template,element,field,instance}(artifact)`

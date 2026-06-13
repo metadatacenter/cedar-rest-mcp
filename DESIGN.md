@@ -20,9 +20,12 @@ honest conduit to it. Artifact *construction* and in-memory validation/conversio
 
 The REST API speaks JSON, and so does this MCP — artifacts go in as JSON and come back as JSON,
 end to end. It does **not** convert to or from YAML, and carries no dependency on
-`cedar-artifact-library`. CEDAR artifacts also travel as compact YAML (the human-friendly
-serialization), but converting between that and the canonical CEDAR JSON is `cedar-artifact-mcp`'s
-job: its `*_to_json` and
+`cedar-artifact-library`. JSON here is the CEDAR server's wire format, not a privileged
+representation: the artifact *model* is what's canonical, and JSON and YAML are equal
+serializations of it (cedar-artifact-mcp Principle 8) — JSON is merely the de-facto serialization
+today because the server, validator, and meta-schema all speak it. CEDAR artifacts also travel as
+compact YAML (the human-friendly serialization), but converting between that and the server's JSON
+is `cedar-artifact-mcp`'s job: its `*_to_json` and
 `*_to_yaml` tools exist for exactly this boundary, and the orchestrating LLM runs them on either
 side of a REST call. Conversion lived here once (reusing the library); folding it back into the
 single MCP that already owns it removed a duplicated copy of the readers/renderers, let this MCP
